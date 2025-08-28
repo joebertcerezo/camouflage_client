@@ -7,7 +7,8 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "lint:typescript": "vue-tsc --build --noEmit --watch"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.12",
@@ -22,6 +23,7 @@
     "tailwindcss": "^4.1.12",
     "tw-animate-css": "^1.3.7",
     "vue": "^3.5.20",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "vue-tsc": "^3.0.6"
   }
 }
