@@ -1,30 +1,4 @@
 Release Notes
 
- - 2ce82ad6 Update pnpm-lock.yaml
- - 273fb82d Update package.json
- - 9fb6c823 Update index.vue
- - 2d193da9 Create TooltipTrigger.vue
- - 3449062b Create TooltipProvider.vue
- - 4813036c Create TooltipContent.vue
- - fe5b6a9a Create Tooltip.vue
- - 5b23b7d5 Create index.ts
- - c2d88094 Create Textarea.vue
- - 18dabcb2 Create index.ts
- - bda786b9 Create Skeleton.vue
- - d16c3194 Create index.ts
- - afd4d1cc Create Separator.vue
- - 7db8b29c Create index.ts
- - d5ecabf8 Create index.ts
- - bd9080d4 Create CardTitle.vue
- - 4bea761e Create CardHeader.vue
- - 9ae13062 Create CardFooter.vue
- - d004e83e Create CardDescription.vue
- - 173ab442 Create CardContent.vue
- - 4f52382d Create CardAction.vue
- - 00cd5505 Create Card.vue
- - efe1dff2 Create index.ts
- - e4270f3a Create Badge.vue
- - 70094095 Create index.ts
- - cf7289c1 Create AlertTitle.vue
- - ec747dee Create AlertDescription.vue
- - 4343dc63 Create Alert.vue
+ - 696e4894 Update README.md
+ - d1d5b7f0 Merge tag 'v0.2.0' into develop
