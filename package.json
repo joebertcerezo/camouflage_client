@@ -8,7 +8,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "lint:typescript": "vue-tsc --build --noEmit --watch"
+    "lint:typescript": "vue-tsc --build --noEmit --watch",
+    "deepclean": "rm -rf node_modules .nuxt pnpm-lock.yaml"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.12",
