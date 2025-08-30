@@ -150,7 +150,7 @@
               <TooltipTrigger asChild>
                 <Button
                   @click="createAnswer"
-                  :disabled="isLoading || !offerSdp?.value"
+                  :disabled="isLoading || !offerSdpValue"
                   variant="secondary"
                   class="transition-all duration-200"
                   size="lg"
@@ -174,7 +174,7 @@
               <TooltipTrigger asChild>
                 <Button
                   @click="addAnswer"
-                  :disabled="isLoading || !answerSdp?.value"
+                  :disabled="isLoading || !answerSdpValue"
                   variant="outline"
                   class="transition-all duration-200"
                   size="lg"
@@ -247,9 +247,9 @@
         <CardContent>
           <Textarea
             ref="offerSdp"
+            v-model="offerSdpValue"
             placeholder="Offer SDP will appear here after creating an offer..."
             class="min-h-[160px] font-mono text-xs resize-none transition-all duration-200 focus:ring-2"
-            readonly
           />
         </CardContent>
       </Card>
@@ -301,9 +301,9 @@
         <CardContent>
           <Textarea
             ref="answerSdp"
+            v-model="answerSdpValue"
             placeholder="Answer SDP will appear here after creating an answer..."
             class="min-h-[160px] font-mono text-xs resize-none transition-all duration-200 focus:ring-2"
-            readonly
           />
         </CardContent>
       </Card>
@@ -354,6 +354,10 @@ const remoteVideo = ref<HTMLVideoElement>();
 const offerSdp = ref<HTMLTextAreaElement>();
 const answerSdp = ref<HTMLTextAreaElement>();
 
+// SDP values as reactive refs for proper two-way binding
+const offerSdpValue = ref<string>("");
+const answerSdpValue = ref<string>("");
+
 const peerConnection = ref<RTCPeerConnection>();
 const localStream = ref<MediaStream>();
 const remoteStream = ref<MediaStream>();
@@ -394,9 +398,9 @@ const dismissError = () => {
 
 const copyToClipboard = async (type: "offer" | "answer") => {
   try {
-    const textarea = type === "offer" ? offerSdp.value : answerSdp.value;
-    if (textarea?.value) {
-      await navigator.clipboard.writeText(textarea.value);
+    const value = type === "offer" ? offerSdpValue.value : answerSdpValue.value;
+    if (value) {
+      await navigator.clipboard.writeText(value);
       // You could add a toast notification here
       console.log(`${type} SDP copied to clipboard`);
     }
@@ -407,9 +411,10 @@ const copyToClipboard = async (type: "offer" | "answer") => {
 };
 
 const clearSdp = (type: "offer" | "answer") => {
-  const textarea = type === "offer" ? offerSdp.value : answerSdp.value;
-  if (textarea) {
-    textarea.value = "";
+  if (type === "offer") {
+    offerSdpValue.value = "";
+  } else {
+    answerSdpValue.value = "";
   }
 };
 
@@ -503,13 +508,9 @@ const createOffer = async () => {
 
     peerConnection.value.onicecandidate = async (event) => {
       if (event.candidate) {
-        console.log("asdkfjalsdjf123");
-        if (offerSdp.value && peerConnection.value?.localDescription) {
-          console.log(
-            "asdkfjalsdjf",
-            JSON.stringify(peerConnection.value.localDescription)
-          );
-          offerSdp.value.value = JSON.stringify(
+        console.log("ICE candidate generated:", event.candidate);
+        if (peerConnection.value?.localDescription) {
+          offerSdpValue.value = JSON.stringify(
             peerConnection.value.localDescription
           );
         }
@@ -533,7 +534,7 @@ const createAnswer = async () => {
   try {
     if (!peerConnection.value) return;
 
-    if (!offerSdp.value?.value) {
+    if (!offerSdpValue.value) {
       setError("Please create an offer first");
       return;
     }
@@ -542,13 +543,13 @@ const createAnswer = async () => {
     loadingAction.value = "answer";
     connectionStatus.value = "connecting";
 
-    const offer = JSON.parse(offerSdp.value.value);
+    const offer = JSON.parse(offerSdpValue.value);
 
     peerConnection.value.onicecandidate = async (event) => {
       if (event.candidate) {
         console.log("Adding answer candidate...:", event.candidate);
-        if (answerSdp.value && peerConnection.value?.localDescription) {
-          answerSdp.value.value = JSON.stringify(
+        if (peerConnection.value?.localDescription) {
+          answerSdpValue.value = JSON.stringify(
             peerConnection.value.localDescription
           );
         }
@@ -575,7 +576,7 @@ const addAnswer = async () => {
 
     console.log("Add answer triggered");
 
-    if (!answerSdp.value?.value) {
+    if (!answerSdpValue.value) {
       setError("Please create an answer first");
       return;
     }
@@ -583,7 +584,7 @@ const addAnswer = async () => {
     isLoading.value = true;
     loadingAction.value = "add";
 
-    const answer = JSON.parse(answerSdp.value.value);
+    const answer = JSON.parse(answerSdpValue.value);
     console.log("answer:", answer);
 
     if (!peerConnection.value.currentRemoteDescription) {
