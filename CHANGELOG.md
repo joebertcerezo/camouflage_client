@@ -1,6 +1,5 @@
 Release Notes
 
- - e6ae9f76 Add MIT License to the project
- - 7c8277a6 Add screenshot section to README
- - c9326b02 Merge branch 'release/v0.3.0'
- - 7473507d Edit CHANGELOG.md
+ - 309281cc chore: remove unnecessary comments
+ - 1e4d35e0 Merge branch 'release/v0.3.1' into develop
+ - 570098ae Edit CHANGELOG.md

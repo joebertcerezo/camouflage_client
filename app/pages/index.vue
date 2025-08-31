@@ -307,7 +307,7 @@ const setError = (message: string) => {
   error.value = message;
   setTimeout(() => {
     error.value = null;
-  }, 5000); // Auto-dismiss after 5 seconds
+  }, 5000);
 };
 
 const dismissError = () => {
