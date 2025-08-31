@@ -153,6 +153,10 @@ camouflage_client/
 - **No Audio**: Currently configured for video-only calls (audio disabled for privacy)
 - **Direct P2P**: No server-side storage of video data - all communication is direct peer-to-peer
 
+## 📸 Screenshot
+
+<img width="1600" height="1561" alt="camouflage" src="https://github.com/user-attachments/assets/fb864491-e370-44d3-b0e8-7615dc28e85b" />
+
 ## 🚀 Deployment
 
 ### Build for Production
