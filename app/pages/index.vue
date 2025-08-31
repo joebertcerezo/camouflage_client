@@ -1,31 +1,7 @@
 <template>
   <div class="container mx-auto p-6 max-w-6xl space-y-8">
     <!-- Header Section -->
-    <div class="space-y-2">
-      <h1
-        class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl"
-      >
-        WebRTC Peer Connection
-      </h1>
-      <p class="text-xl text-muted-foreground">
-        Manage SDP exchange for direct peer-to-peer communication
-      </p>
-      <div class="flex items-center gap-2">
-        <Badge :variant="connectionBadgeVariant">
-          {{ connectionStatus }}
-        </Badge>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger>
-              <HelpCircle class="h-4 w-4 text-muted-foreground" />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Connection status updates in real-time</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-    </div>
+    <Header :connectionBadgeVariant :connectionStatus />
 
     <!-- Error Alert -->
     <Alert
@@ -44,159 +20,18 @@
     </Alert>
 
     <!-- Video Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card class="overflow-hidden transition-all duration-300 hover:shadow-lg">
-        <CardHeader class="pb-3">
-          <CardTitle class="flex items-center gap-2">
-            <Video class="h-5 w-5" />
-            Local Video (You)
-          </CardTitle>
-          <CardDescription>Your camera feed</CardDescription>
-        </CardHeader>
-        <CardContent class="pb-6">
-          <div
-            class="relative bg-gradient-to-br from-muted to-muted-foreground/20 rounded-lg overflow-hidden aspect-video"
-          >
-            <video
-              ref="localVideo"
-              autoplay
-              playsinline
-              muted
-              class="w-full h-full object-cover"
-            />
-            <div
-              v-if="!localStream"
-              class="absolute inset-0 flex items-center justify-center"
-            >
-              <Skeleton class="w-full h-full" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card class="overflow-hidden transition-all duration-300 hover:shadow-lg">
-        <CardHeader class="pb-3">
-          <CardTitle class="flex items-center gap-2">
-            <Users class="h-5 w-5" />
-            Remote Video (Peer)
-          </CardTitle>
-          <CardDescription>Connected peer's camera feed</CardDescription>
-        </CardHeader>
-        <CardContent class="pb-6">
-          <div
-            class="relative bg-gradient-to-br from-muted to-muted-foreground/20 rounded-lg overflow-hidden aspect-video"
-          >
-            <video
-              ref="remoteVideo"
-              autoplay
-              playsinline
-              class="w-full h-full object-cover"
-            />
-            <div
-              v-if="!remoteStream || remoteStream.getTracks().length === 0"
-              class="absolute inset-0 flex items-center justify-center"
-            >
-              <div class="text-center space-y-2">
-                <UserX class="h-12 w-12 mx-auto text-muted-foreground" />
-                <p class="text-sm text-muted-foreground">
-                  Waiting for peer connection
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <VideoRTC ref="videoRTCRef" :localStream :remoteStream />
 
     <!-- Controls Section -->
-    <Card>
-      <CardHeader>
-        <CardTitle class="flex items-center gap-2">
-          <Settings class="h-5 w-5" />
-          Connection Controls
-        </CardTitle>
-        <CardDescription>
-          Create and exchange SDP offers and answers to establish peer
-          connection
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  @click="createOffer"
-                  :disabled="isLoading"
-                  class="transition-all duration-200"
-                  size="lg"
-                >
-                  <Phone class="h-4 w-4 mr-2" />
-                  {{
-                    isLoading && loadingAction === "offer"
-                      ? "Creating..."
-                      : "Create Offer"
-                  }}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Initiate a new peer connection</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  @click="createAnswer"
-                  :disabled="isLoading || !offerSdpValue"
-                  variant="secondary"
-                  class="transition-all duration-200"
-                  size="lg"
-                >
-                  <PhoneCall class="h-4 w-4 mr-2" />
-                  {{
-                    isLoading && loadingAction === "answer"
-                      ? "Creating..."
-                      : "Create Answer"
-                  }}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Respond to an incoming offer</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  @click="addAnswer"
-                  :disabled="isLoading || !answerSdpValue"
-                  variant="outline"
-                  class="transition-all duration-200"
-                  size="lg"
-                >
-                  <Check class="h-4 w-4 mr-2" />
-                  {{
-                    isLoading && loadingAction === "add"
-                      ? "Adding..."
-                      : "Add Answer"
-                  }}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Complete the connection with answer SDP</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </CardContent>
-    </Card>
-
-    <Separator />
+    <Controls
+      @addAnswer="addAnswer"
+      @createAnswer="createAnswer"
+      @createOffer="createOffer"
+      :answerSdpValue
+      :offerSdpValue
+      :isLoading
+      :loadingAction
+    />
 
     <!-- SDP Exchange Section -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -249,7 +84,7 @@
             ref="offerSdp"
             v-model="offerSdpValue"
             placeholder="Offer SDP will appear here after creating an offer..."
-            class="min-h-[160px] font-mono text-xs resize-none transition-all duration-200 focus:ring-2"
+            class="min-h-[160px] font-mono text-xs resize-none transition-all duration-200 focus:ring-2 max-h-3"
           />
         </CardContent>
       </Card>
@@ -303,7 +138,7 @@
             ref="answerSdp"
             v-model="answerSdpValue"
             placeholder="Answer SDP will appear here after creating an answer..."
-            class="min-h-[160px] font-mono text-xs resize-none transition-all duration-200 focus:ring-2"
+            class="min-h-[160px] font-mono text-xs resize-none transition-all duration-200 focus:ring-2 max-h-3"
           />
         </CardContent>
       </Card>
@@ -312,7 +147,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import {
   Card,
   CardContent,
@@ -323,8 +158,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -335,22 +168,18 @@ import {
 import {
   Video,
   Users,
-  Settings,
-  Phone,
-  PhoneCall,
-  Check,
   FileText,
   Copy,
   Trash2,
   AlertCircle,
   X,
-  HelpCircle,
   UserX,
 } from "lucide-vue-next";
+import VideoRTC from "@/components/VideoRTC.vue";
 
 // Reactive state
-const localVideo = ref<HTMLVideoElement>();
-const remoteVideo = ref<HTMLVideoElement>();
+const videoRTCRef = ref<InstanceType<typeof VideoRTC>>();
+
 const offerSdp = ref<HTMLTextAreaElement>();
 const answerSdp = ref<HTMLTextAreaElement>();
 
@@ -462,14 +291,6 @@ const init = async () => {
 
     // Initialize remote stream
     remoteStream.value = new MediaStream();
-
-    // Set video sources
-    if (localVideo.value && localStream.value) {
-      localVideo.value.srcObject = localStream.value;
-    }
-    if (remoteVideo.value) {
-      remoteVideo.value.srcObject = remoteStream.value;
-    }
 
     // Add local tracks to peer connection
     localStream.value.getTracks().forEach((track) => {
