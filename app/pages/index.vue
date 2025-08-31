@@ -1,364 +1,286 @@
 <template>
-  <div class="container mx-auto p-6 max-w-6xl space-y-8">
-    <!-- Header Section -->
-    <div class="space-y-2">
-      <h1
-        class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl"
+  <div class="min-h-screen tactical-pattern bg-[var(--background)]">
+    <div class="container mx-auto p-6 max-w-7xl space-y-8">
+      <!-- Header Section -->
+      <Header :connectionBadgeVariant :connectionStatus />
+
+      <!-- Error Alert -->
+      <Alert
+        v-if="error"
+        variant="destructive"
+        class="tactical-card border-red-500/50 bg-red-500/5 transition-all duration-300"
       >
-        WebRTC Peer Connection
-      </h1>
-      <p class="text-xl text-muted-foreground">
-        Manage SDP exchange for direct peer-to-peer communication
-      </p>
-      <div class="flex items-center gap-2">
-        <Badge :variant="connectionBadgeVariant">
-          {{ connectionStatus }}
-        </Badge>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger>
-              <HelpCircle class="h-4 w-4 text-muted-foreground" />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Connection status updates in real-time</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-    </div>
-
-    <!-- Error Alert -->
-    <Alert
-      v-if="error"
-      variant="destructive"
-      class="transition-all duration-300"
-    >
-      <AlertCircle class="h-4 w-4" />
-      <AlertTitle>Connection Error</AlertTitle>
-      <AlertDescription class="flex items-center justify-between">
-        {{ error }}
-        <Button variant="ghost" size="sm" @click="dismissError">
-          <X class="h-4 w-4" />
-        </Button>
-      </AlertDescription>
-    </Alert>
-
-    <!-- Video Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card class="overflow-hidden transition-all duration-300 hover:shadow-lg">
-        <CardHeader class="pb-3">
-          <CardTitle class="flex items-center gap-2">
-            <Video class="h-5 w-5" />
-            Local Video (You)
-          </CardTitle>
-          <CardDescription>Your camera feed</CardDescription>
-        </CardHeader>
-        <CardContent class="pb-6">
-          <div
-            class="relative bg-gradient-to-br from-muted to-muted-foreground/20 rounded-lg overflow-hidden aspect-video"
+        <AlertCircle class="h-4 w-4" />
+        <AlertTitle class="font-bold tracking-wide text-red-600"
+          >SYSTEM ALERT</AlertTitle
+        >
+        <AlertDescription class="flex items-center justify-between">
+          <span class="font-medium text-red-700">{{ error }}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            @click="dismissError"
+            class="text-red-600 hover:text-red-500 hover:bg-red-500/10"
           >
-            <video
-              ref="localVideo"
-              autoplay
-              playsinline
-              muted
-              class="w-full h-full object-cover"
-            />
-            <div
-              v-if="!localStream"
-              class="absolute inset-0 flex items-center justify-center"
-            >
-              <Skeleton class="w-full h-full" />
+            <X class="h-4 w-4" />
+          </Button>
+        </AlertDescription>
+      </Alert>
+
+      <!-- Video Section -->
+      <VideoRTC :localStream :remoteStream />
+
+      <!-- Controls Section -->
+      <Controls
+        @addAnswer="addAnswer"
+        @createAnswer="createAnswer"
+        @createOffer="createOffer"
+        :answerSdpValue
+        :offerSdpValue
+        :isLoading
+        :loadingAction
+      />
+
+      <!-- SDP Exchange Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Offer SDP Panel -->
+        <Card class="tactical-card transition-all duration-300 hover:shadow-xl">
+          <CardHeader
+            class="bg-gradient-to-r from-[var(--tactical-electric)]/5 to-[var(--tactical-electric-light)]/5"
+          >
+            <CardTitle class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="tactical-gradient p-2 rounded-md">
+                  <FileText class="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <div
+                    class="text-[var(--tactical-primary)] font-bold tracking-wide"
+                  >
+                    OFFER SDP
+                  </div>
+                  <div
+                    class="text-xs text-[var(--tactical-electric)] font-medium uppercase tracking-wider"
+                  >
+                    Connection Initiation
+                  </div>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        @click="copyToClipboard('offer')"
+                        class="tactical-button text-[var(--tactical-electric)] hover:text-[var(--tactical-electric-light)] hover:bg-[var(--tactical-electric)]/10"
+                      >
+                        <Copy class="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      class="bg-[var(--tactical-primary)] text-white border-[var(--tactical-electric)]"
+                    >
+                      <p class="font-medium">Copy to secure clipboard</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        @click="clearSdp('offer')"
+                        class="tactical-button text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                      >
+                        <Trash2 class="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent class="bg-red-600 text-white">
+                      <p class="font-medium">Clear protocol data</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </CardTitle>
+            <CardDescription class="text-[var(--tactical-accent)] font-medium">
+              Session Description Protocol for connection establishment
+            </CardDescription>
+          </CardHeader>
+          <CardContent class="relative">
+            <!-- Tactical Terminal Style -->
+            <div class="relative">
+              <div
+                class="absolute top-3 left-3 z-10 bg-black/70 px-2 py-1 rounded text-xs font-mono text-[var(--tactical-electric)]"
+              >
+                OFFER_SDP
+              </div>
+              <Textarea
+                ref="offerSdp"
+                v-model="offerSdpValue"
+                placeholder="// Waiting for offer SDP generation...
+// Protocol will appear here after creating connection offer
+// Format: Session Description Protocol (RFC 4566)"
+                class="min-h-[180px] font-mono text-xs resize-none bg-black/5 border-[var(--tactical-primary)]/30 focus:border-[var(--tactical-electric)] focus:ring-[var(--tactical-electric)] text-[var(--tactical-primary)] placeholder-[var(--tactical-accent)]/60 pt-8"
+              />
             </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      <Card class="overflow-hidden transition-all duration-300 hover:shadow-lg">
-        <CardHeader class="pb-3">
-          <CardTitle class="flex items-center gap-2">
-            <Users class="h-5 w-5" />
-            Remote Video (Peer)
-          </CardTitle>
-          <CardDescription>Connected peer's camera feed</CardDescription>
-        </CardHeader>
-        <CardContent class="pb-6">
-          <div
-            class="relative bg-gradient-to-br from-muted to-muted-foreground/20 rounded-lg overflow-hidden aspect-video"
-          >
-            <video
-              ref="remoteVideo"
-              autoplay
-              playsinline
-              class="w-full h-full object-cover"
-            />
-            <div
-              v-if="!remoteStream || remoteStream.getTracks().length === 0"
-              class="absolute inset-0 flex items-center justify-center"
-            >
-              <div class="text-center space-y-2">
-                <UserX class="h-12 w-12 mx-auto text-muted-foreground" />
-                <p class="text-sm text-muted-foreground">
-                  Waiting for peer connection
-                </p>
+            <!-- Status Indicator -->
+            <div class="mt-3 flex items-center justify-between text-xs">
+              <div class="flex items-center space-x-2">
+                <div
+                  class="w-2 h-2 rounded-full"
+                  :class="
+                    offerSdpValue ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+                  "
+                ></div>
+                <span
+                  class="text-[var(--tactical-primary)] font-medium uppercase tracking-wide"
+                >
+                  {{ offerSdpValue ? "SDP Ready" : "Standby" }}
+                </span>
+              </div>
+              <div class="text-[var(--tactical-accent)] font-mono">
+                {{
+                  offerSdpValue ? `${offerSdpValue.length} BYTES` : "NO DATA"
+                }}
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
 
-    <!-- Controls Section -->
-    <Card>
-      <CardHeader>
-        <CardTitle class="flex items-center gap-2">
-          <Settings class="h-5 w-5" />
-          Connection Controls
-        </CardTitle>
-        <CardDescription>
-          Create and exchange SDP offers and answers to establish peer
-          connection
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  @click="createOffer"
-                  :disabled="isLoading"
-                  class="transition-all duration-200"
-                  size="lg"
+        <!-- Answer SDP Panel -->
+        <Card class="tactical-card transition-all duration-300 hover:shadow-xl">
+          <CardHeader
+            class="bg-gradient-to-r from-[var(--tactical-secondary)]/5 to-[var(--tactical-accent)]/5"
+          >
+            <CardTitle class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div
+                  class="bg-gradient-to-br from-[var(--tactical-secondary)] to-[var(--tactical-accent)] p-2 rounded-md"
                 >
-                  <Phone class="h-4 w-4 mr-2" />
-                  {{
-                    isLoading && loadingAction === "offer"
-                      ? "Creating..."
-                      : "Create Offer"
-                  }}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Initiate a new peer connection</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+                  <FileText class="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <div
+                    class="text-[var(--tactical-primary)] font-bold tracking-wide"
+                  >
+                    ANSWER SDP
+                  </div>
+                  <div
+                    class="text-xs text-[var(--tactical-electric)] font-medium uppercase tracking-wider"
+                  >
+                    Connection Response
+                  </div>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        @click="copyToClipboard('answer')"
+                        class="tactical-button text-[var(--tactical-electric)] hover:text-[var(--tactical-electric-light)] hover:bg-[var(--tactical-electric)]/10"
+                      >
+                        <Copy class="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      class="bg-[var(--tactical-primary)] text-white border-[var(--tactical-electric)]"
+                    >
+                      <p class="font-medium">Copy to secure clipboard</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        @click="clearSdp('answer')"
+                        class="tactical-button text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                      >
+                        <Trash2 class="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent class="bg-red-600 text-white">
+                      <p class="font-medium">Clear protocol data</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </CardTitle>
+            <CardDescription class="text-[var(--tactical-accent)] font-medium">
+              Peer response protocol for handshake completion
+            </CardDescription>
+          </CardHeader>
+          <CardContent class="relative">
+            <!-- Tactical Terminal Style -->
+            <div class="relative">
+              <div
+                class="absolute top-3 left-3 z-10 bg-black/70 px-2 py-1 rounded text-xs font-mono text-[var(--tactical-electric)]"
+              >
+                ANSWER_SDP
+              </div>
+              <Textarea
+                ref="answerSdp"
+                v-model="answerSdpValue"
+                placeholder="// Waiting for answer SDP generation...
+// Response protocol will appear here after creating answer
+// Format: Session Description Protocol (RFC 4566)"
+                class="min-h-[180px] font-mono text-xs resize-none bg-black/5 border-[var(--tactical-primary)]/30 focus:border-[var(--tactical-electric)] focus:ring-[var(--tactical-electric)] text-[var(--tactical-primary)] placeholder-[var(--tactical-accent)]/60 pt-8"
+              />
+            </div>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  @click="createAnswer"
-                  :disabled="isLoading || !offerSdp?.value"
-                  variant="secondary"
-                  class="transition-all duration-200"
-                  size="lg"
+            <!-- Status Indicator -->
+            <div class="mt-3 flex items-center justify-between text-xs">
+              <div class="flex items-center space-x-2">
+                <div
+                  class="w-2 h-2 rounded-full"
+                  :class="
+                    answerSdpValue
+                      ? 'bg-green-500 animate-pulse'
+                      : 'bg-gray-400'
+                  "
+                ></div>
+                <span
+                  class="text-[var(--tactical-primary)] font-medium uppercase tracking-wide"
                 >
-                  <PhoneCall class="h-4 w-4 mr-2" />
-                  {{
-                    isLoading && loadingAction === "answer"
-                      ? "Creating..."
-                      : "Create Answer"
-                  }}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Respond to an incoming offer</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  @click="addAnswer"
-                  :disabled="isLoading || !answerSdp?.value"
-                  variant="outline"
-                  class="transition-all duration-200"
-                  size="lg"
-                >
-                  <Check class="h-4 w-4 mr-2" />
-                  {{
-                    isLoading && loadingAction === "add"
-                      ? "Adding..."
-                      : "Add Answer"
-                  }}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Complete the connection with answer SDP</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </CardContent>
-    </Card>
-
-    <Separator />
-
-    <!-- SDP Exchange Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card class="transition-all duration-300 hover:shadow-md">
-        <CardHeader>
-          <CardTitle class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <FileText class="h-5 w-5" />
-              Offer SDP
+                  {{ answerSdpValue ? "SDP Ready" : "Standby" }}
+                </span>
+              </div>
+              <div class="text-[var(--tactical-accent)] font-mono">
+                {{
+                  answerSdpValue ? `${answerSdpValue.length} BYTES` : "NO DATA"
+                }}
+              </div>
             </div>
-            <div class="flex gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      @click="copyToClipboard('offer')"
-                    >
-                      <Copy class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Copy to clipboard</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      @click="clearSdp('offer')"
-                    >
-                      <Trash2 class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Clear content</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </CardTitle>
-          <CardDescription>Connection offer details for peer</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            ref="offerSdp"
-            placeholder="Offer SDP will appear here after creating an offer..."
-            class="min-h-[160px] font-mono text-xs resize-none transition-all duration-200 focus:ring-2"
-            readonly
-          />
-        </CardContent>
-      </Card>
-
-      <Card class="transition-all duration-300 hover:shadow-md">
-        <CardHeader>
-          <CardTitle class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <FileText class="h-5 w-5" />
-              Answer SDP
-            </div>
-            <div class="flex gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      @click="copyToClipboard('answer')"
-                    >
-                      <Copy class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Copy to clipboard</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      @click="clearSdp('answer')"
-                    >
-                      <Trash2 class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Clear content</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </CardTitle>
-          <CardDescription>Response to connection offer</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            ref="answerSdp"
-            placeholder="Answer SDP will appear here after creating an answer..."
-            class="min-h-[160px] font-mono text-xs resize-none transition-all duration-200 focus:ring-2"
-            readonly
-          />
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, onUnmounted } from "vue";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  Video,
-  Users,
-  Settings,
-  Phone,
-  PhoneCall,
-  Check,
-  FileText,
-  Copy,
-  Trash2,
-  AlertCircle,
-  X,
-  HelpCircle,
-  UserX,
-} from "lucide-vue-next";
+import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
+import { FileText, Copy, Trash2, AlertCircle, X } from "lucide-vue-next";
 
-// Reactive state
-const localVideo = ref<HTMLVideoElement>();
-const remoteVideo = ref<HTMLVideoElement>();
 const offerSdp = ref<HTMLTextAreaElement>();
 const answerSdp = ref<HTMLTextAreaElement>();
+
+const offerSdpValue = ref<string>("");
+const answerSdpValue = ref<string>("");
 
 const peerConnection = ref<RTCPeerConnection>();
 const localStream = ref<MediaStream>();
 const remoteStream = ref<MediaStream>();
 
-// UI state
 const isLoading = ref(false);
 const loadingAction = ref<"offer" | "answer" | "add" | null>(null);
 const error = ref<string | null>(null);
@@ -394,9 +316,9 @@ const dismissError = () => {
 
 const copyToClipboard = async (type: "offer" | "answer") => {
   try {
-    const textarea = type === "offer" ? offerSdp.value : answerSdp.value;
-    if (textarea?.value) {
-      await navigator.clipboard.writeText(textarea.value);
+    const value = type === "offer" ? offerSdpValue.value : answerSdpValue.value;
+    if (value) {
+      await navigator.clipboard.writeText(value);
       // You could add a toast notification here
       console.log(`${type} SDP copied to clipboard`);
     }
@@ -407,9 +329,10 @@ const copyToClipboard = async (type: "offer" | "answer") => {
 };
 
 const clearSdp = (type: "offer" | "answer") => {
-  const textarea = type === "offer" ? offerSdp.value : answerSdp.value;
-  if (textarea) {
-    textarea.value = "";
+  if (type === "offer") {
+    offerSdpValue.value = "";
+  } else {
+    answerSdpValue.value = "";
   }
 };
 
@@ -441,39 +364,25 @@ const init = async () => {
   try {
     connectionStatus.value = "connecting";
 
-    // Initialize peer connection
     peerConnection.value = new RTCPeerConnection();
 
-    // Monitor connection state changes
     peerConnection.value.onconnectionstatechange = () => {
       updateConnectionStatus();
     };
 
-    // Get user media
     localStream.value = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: false,
     });
 
-    // Initialize remote stream
     remoteStream.value = new MediaStream();
 
-    // Set video sources
-    if (localVideo.value && localStream.value) {
-      localVideo.value.srcObject = localStream.value;
-    }
-    if (remoteVideo.value) {
-      remoteVideo.value.srcObject = remoteStream.value;
-    }
-
-    // Add local tracks to peer connection
     localStream.value.getTracks().forEach((track) => {
       if (peerConnection.value && localStream.value) {
         peerConnection.value.addTrack(track, localStream.value);
       }
     });
 
-    // Handle incoming tracks
     peerConnection.value.ontrack = (event) => {
       if (event.streams && event.streams[0]) {
         event.streams[0].getTracks().forEach((track) => {
@@ -503,13 +412,9 @@ const createOffer = async () => {
 
     peerConnection.value.onicecandidate = async (event) => {
       if (event.candidate) {
-        console.log("asdkfjalsdjf123");
-        if (offerSdp.value && peerConnection.value?.localDescription) {
-          console.log(
-            "asdkfjalsdjf",
-            JSON.stringify(peerConnection.value.localDescription)
-          );
-          offerSdp.value.value = JSON.stringify(
+        console.log("ICE candidate generated:", event.candidate);
+        if (peerConnection.value?.localDescription) {
+          offerSdpValue.value = JSON.stringify(
             peerConnection.value.localDescription
           );
         }
@@ -533,7 +438,7 @@ const createAnswer = async () => {
   try {
     if (!peerConnection.value) return;
 
-    if (!offerSdp.value?.value) {
+    if (!offerSdpValue.value) {
       setError("Please create an offer first");
       return;
     }
@@ -542,13 +447,13 @@ const createAnswer = async () => {
     loadingAction.value = "answer";
     connectionStatus.value = "connecting";
 
-    const offer = JSON.parse(offerSdp.value.value);
+    const offer = JSON.parse(offerSdpValue.value);
 
     peerConnection.value.onicecandidate = async (event) => {
       if (event.candidate) {
         console.log("Adding answer candidate...:", event.candidate);
-        if (answerSdp.value && peerConnection.value?.localDescription) {
-          answerSdp.value.value = JSON.stringify(
+        if (peerConnection.value?.localDescription) {
+          answerSdpValue.value = JSON.stringify(
             peerConnection.value.localDescription
           );
         }
@@ -575,7 +480,7 @@ const addAnswer = async () => {
 
     console.log("Add answer triggered");
 
-    if (!answerSdp.value?.value) {
+    if (!answerSdpValue.value) {
       setError("Please create an answer first");
       return;
     }
@@ -583,12 +488,12 @@ const addAnswer = async () => {
     isLoading.value = true;
     loadingAction.value = "add";
 
-    const answer = JSON.parse(answerSdp.value.value);
+    const answer = JSON.parse(answerSdpValue.value);
     console.log("answer:", answer);
 
     if (!peerConnection.value.currentRemoteDescription) {
       await peerConnection.value.setRemoteDescription(answer);
-      console.log("Answer added successfully");
+      console.log("Answer added successfully", remoteStream.value?.getTracks());
       connectionStatus.value = "connected";
     } else {
       console.log("Remote description already set");
@@ -603,12 +508,10 @@ const addAnswer = async () => {
   }
 };
 
-// Initialize when component is mounted
 onMounted(() => {
   init();
 });
 
-// Cleanup when component is unmounted
 onUnmounted(() => {
   if (localStream.value) {
     localStream.value.getTracks().forEach((track) => track.stop());
@@ -616,5 +519,9 @@ onUnmounted(() => {
   if (peerConnection.value) {
     peerConnection.value.close();
   }
+});
+
+useSeoMeta({
+  title: "Camouflage - Simple WebRTC",
 });
 </script>
