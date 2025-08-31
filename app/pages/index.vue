@@ -20,7 +20,7 @@
     </Alert>
 
     <!-- Video Section -->
-    <VideoRTC ref="videoRTCRef" :localStream :remoteStream />
+    <VideoRTC :localStream :remoteStream />
 
     <!-- Controls Section -->
     <Controls
@@ -148,42 +148,11 @@
 
 <script lang="ts" setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  Video,
-  Users,
-  FileText,
-  Copy,
-  Trash2,
-  AlertCircle,
-  X,
-  UserX,
-} from "lucide-vue-next";
-import VideoRTC from "@/components/VideoRTC.vue";
-
-// Reactive state
-const videoRTCRef = ref<InstanceType<typeof VideoRTC>>();
+import { FileText, Copy, Trash2, AlertCircle, X } from "lucide-vue-next";
 
 const offerSdp = ref<HTMLTextAreaElement>();
 const answerSdp = ref<HTMLTextAreaElement>();
 
-// SDP values as reactive refs for proper two-way binding
 const offerSdpValue = ref<string>("");
 const answerSdpValue = ref<string>("");
 
@@ -191,7 +160,6 @@ const peerConnection = ref<RTCPeerConnection>();
 const localStream = ref<MediaStream>();
 const remoteStream = ref<MediaStream>();
 
-// UI state
 const isLoading = ref(false);
 const loadingAction = ref<"offer" | "answer" | "add" | null>(null);
 const error = ref<string | null>(null);
@@ -275,31 +243,25 @@ const init = async () => {
   try {
     connectionStatus.value = "connecting";
 
-    // Initialize peer connection
     peerConnection.value = new RTCPeerConnection();
 
-    // Monitor connection state changes
     peerConnection.value.onconnectionstatechange = () => {
       updateConnectionStatus();
     };
 
-    // Get user media
     localStream.value = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: false,
     });
 
-    // Initialize remote stream
     remoteStream.value = new MediaStream();
 
-    // Add local tracks to peer connection
     localStream.value.getTracks().forEach((track) => {
       if (peerConnection.value && localStream.value) {
         peerConnection.value.addTrack(track, localStream.value);
       }
     });
 
-    // Handle incoming tracks
     peerConnection.value.ontrack = (event) => {
       if (event.streams && event.streams[0]) {
         event.streams[0].getTracks().forEach((track) => {
@@ -425,12 +387,10 @@ const addAnswer = async () => {
   }
 };
 
-// Initialize when component is mounted
 onMounted(() => {
   init();
 });
 
-// Cleanup when component is unmounted
 onUnmounted(() => {
   if (localStream.value) {
     localStream.value.getTracks().forEach((track) => track.stop());
@@ -439,4 +399,9 @@ onUnmounted(() => {
     peerConnection.value.close();
   }
 });
+
+useSeoMeta({
+  title: "Camouflage - Simple WebRTC"
+})
+
 </script>
