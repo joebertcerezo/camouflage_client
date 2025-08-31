@@ -99,9 +99,4 @@ watch(
   },
   { immediate: true }
 );
-
-defineExpose<{
-  localVideo: HTMLVideoElement;
-  remoteVideo: HTMLVideoElement;
-}>();
 </script>
